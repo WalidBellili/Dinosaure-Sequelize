@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const { Dinosaure } = require("../models/index");
+const { checkIfExists, checkIfNotExists } = require("../middleware/dinosaure");
 
 app.post("/", async (req, res) => {
   try {
@@ -14,8 +15,7 @@ app.post("/", async (req, res) => {
 
 app.get("/", async (req, res) => {
   try {
-    const dinosaure = await Dinosaure.findAll({});
-
+    const dinosaure = await Dinosaure.findAll();
     res.json(dinosaure);
   } catch (e) {
     console.log(e);
@@ -24,20 +24,9 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/:id", async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const dinosaure = await Dinosaure.findOne({
-      where: {
-        id,
-      },
-    });
-
-    if (dinosaure) {
-      res.json(dinosaure);
-    } else {
-      res.status(404).json("Dinosaure not found");
-    }
+    const dinosaure = await Dinosaure.create(req.body);
+    res.json(dinosaure);
   } catch (e) {
     console.log(e);
     res.status(500).json("Internal server error");
@@ -46,19 +35,13 @@ app.get("/:id", async (req, res) => {
 
 app.put("/:id", async (req, res) => {
   const { id } = req.params;
-
-  try {
-    const dinosaure = await Dinosaure.update(req.body, {
-      where: {
-        id,
-      },
-    });
-
-    res.json(dinosaure);
-  } catch (e) {
-    console.log(e);
-    res.status(500).json("Internal server error");
-  }
+  await Dinosaure.update(req.body, {
+    where: { id },
+  });
+  const dinosaure = await Dinosaure.findOne({
+    where: { id },
+  });
+  res.json(dinosaure);
 });
 
 app.delete("/:id", async (req, res) => {
@@ -69,7 +52,7 @@ app.delete("/:id", async (req, res) => {
       where: { id },
     });
 
-    res.status(204);
+    res.status(204).json("Dinosaure deleted");
   } catch (e) {
     console.log(e);
     res.status(500).json("Internal server error");
